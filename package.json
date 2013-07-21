@@ -1,0 +1,13 @@
+{
+    "name": "http-server",
+    "preferGlobal": true,
+    "author": "Nodejitsu <support@nodejitsu.com>",
+    "description": "Server-Client fuer Midi",
+
+    "dependencies" : {
+        "express"  :  "3.0.0"
+    },
+    "engines": {
+        "node": "0.10.13"
+    }
+}

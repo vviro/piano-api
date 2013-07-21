@@ -39,5 +39,4 @@ io.sockets.on('connection', function (socket) {
         io.sockets.emit('user disconnected');
         console.log('user disconnected');
     });
-
 });

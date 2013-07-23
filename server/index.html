@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Chat</title>
 
-    <script src="http://localhost:8124/public/javascripts/jquery-1.10.2.js"></script>
+    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
 
     <script src="http://localhost:8124/socket.io/socket.io.js"></script>
     <script>
@@ -17,15 +17,29 @@
             socket.emit('addme', prompt('Username already in use. Please take a different Username?'));
         });
 
+        socket.on('invalid', function() {
+            socket.emit('addme', prompt('Invalid username (no spaces allowed). Please take a different Username?'));
+        });
+
+        socket.on('count', function(count) {
+            document.getElementById('count').innerHTML = 'Currently online: '+count;
+        });
+
         socket.on('chat',function(username, data) {
             var p = document.createElement('p');
             p.innerHTML = username + ': ' + data;
             document.getElementById('output').appendChild(p);
         });
 
-        socket.on('whisperMessage',function(username, data) {
+        socket.on('whisperMessageReceive',function(username, data) {
             var p = document.createElement('p');
-            p.innerHTML = '(private message from)' + username + ': ' + data;
+            p.innerHTML = 'private message from ' + username + ': ' + data;
+            document.getElementById('output').appendChild(p);
+        });
+
+        socket.on('whisperMessageSend',function(username, data) {
+            var p = document.createElement('p');
+            p.innerHTML = 'private message to ' + username + ': ' + data;
             document.getElementById('output').appendChild(p);
         });
 
@@ -43,9 +57,12 @@
             document.getElementById('sendtext').addEventListener('click',
                     function() {
                         var text = document.getElementById('data').value;
-                        // wisper wird noch eingebaut regex habe noch nicht funktioniert
 
                         socket.emit('sendchat', text);
+                        document.getElementById('data').value = "";
+
+
+                        socket.emit('sendJSON', {type:1,name:'test'})
 
                     }, false);
         }, false);
@@ -53,6 +70,7 @@
     </script>
 </head>
 <body>
+<div id="count">Offline</div>
 <div id="output"></div>
 <div id="send">
     <input type="text" id="data" size="100" /><br />

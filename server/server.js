@@ -167,6 +167,13 @@ io.sockets.on('connection', function (socket) {
         //console.log('type:  '+data.type + ' and name:' + data.name);
     });
 
+
+    //midi
+    socket.on('sendMidiEvent', function(string) {
+        console.log(string);
+        socket.broadcast.emit('receiveMidiEvent', string);
+    });
+
     socket.on('disconnect', function() {
         //fall dass man ohne anmelden gleich schliesst
         if(socket.userID != null){

@@ -121,7 +121,13 @@
                     }, false);
         }, false);
 
+     function sendMidiEvent(string){
+         socket.emit('sendMidiEvent', string);
+     }
 
+        socket.on('receiveMidiEvent',function(string) {
+            postMidi(string);
+        });
 
     </script>
 </head>
@@ -150,9 +156,19 @@ var sel;
 
 //// Callback function
 function midiProc(t,a,b,c){
-    msg.innerHTML=msg.innerHTML+midiString(a,b,c)+"<br>";
+    var string = midiString(a,b,c);
+    msg.innerHTML=msg.innerHTML+string+"<br>";
+    msg.scrollTop=msg.scrollHeight;
+    sendMidiEvent(string);
+}
+
+function postMidi(string){
+    msg.innerHTML=msg.innerHTML+string+"<br>";
     msg.scrollTop=msg.scrollHeight;
 }
+
+
+
 function midiString(a,b,c){
     var cmd=Math.floor(a/16);
     var note=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'][b%12]+Math.floor(b/12);

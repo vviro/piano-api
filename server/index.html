@@ -121,10 +121,12 @@
                     }, false);
         }, false);
 
+     //schickt MidiEvent an Server
      function sendMidiEvent(string){
          socket.emit('sendMidiEvent', string);
      }
 
+        //umgang mit empfangenen MidiEvent
         socket.on('receiveMidiEvent',function(string) {
             postMidi(string);
         });
@@ -162,6 +164,7 @@ function midiProc(t,a,b,c){
     sendMidiEvent(string);
 }
 
+//test dass an die ausgabe von anderen clients geschrieben wird
 function postMidi(string){
     msg.innerHTML=msg.innerHTML+string+"<br>";
     msg.scrollTop=msg.scrollHeight;

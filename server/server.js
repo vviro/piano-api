@@ -18,9 +18,91 @@ var io = sio.listen(server);
 
 server.listen(8124);
 
+//Variable fuer die eingehenden Clients, wird hochgezaehlt
+var userID = 0;
+//anzahl aktueller clients die verbunden sind
+var currentlyConnected = 0;
+
+Client = function(userID, userName, socket){
+    this.userID = userID;
+    this.userName = userName;
+    this.socket = socket;
+}
+
+Clients = function(){
+    this.user = [];
+}
+
+//gibt client zurueck per id suche
+Clients.prototype.getUserByID = function(userID){
+    var client = this.user[userID];
+    return client;
+}
+
+//gibt client zurueck per namen suche
+Clients.prototype.getUserByName = function(userName){
+    for(var i = 0; i < this.user.length; i++){
+        if(this.user[i].userName == userName){
+            var client = this.user[i];
+            return client;
+        }
+    }
+    return;
+}
+
+
+//fuegt neuen Client der liste hinzu
+Clients.prototype.addUser = function(userName, socket){
+    this.user[userID] = new Client(userID,userName, socket);
+    currentlyConnected += 1;
+    userID += 1;
+
+}
+
+
+
+//gibt array mit namen zurueck
+Clients.prototype.getNamesArray = function(){
+    var names = [];
+    for(var i = 0; i < this.user.length; i++){
+        if(this.user[i]){
+            names.push(this.user[i].userName);
+        }
+    }
+    return names;
+}
+
+Clients.prototype.getUsername = function(userID){
+    return this.user[userID].userName;
+}
+
+//testet obs namen gibt, true wenn ja, false wenn nein
+Clients.prototype.existingName = function(userName){
+    for(var i = 0; i < this.user.length; i++){
+        if(this.user[i]){
+            if(this.user[i].userName == userName){
+                //fall dass es namen schon gibt
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+//im moment noch rausloeschen
+Clients.prototype.disconnectUser = function(userID){
+   this.user[userID] = null;
+    currentlyConnected -= 1;
+}
+
+var clients = new Clients();
+
+
 
 var connectedSockets = {} ;
 var connectedCount = 0;
+var online = [];
+
 
 io.sockets.on('connection', function (socket) {
     socket.on('addme',function(username) {
@@ -28,17 +110,22 @@ io.sockets.on('connection', function (socket) {
         if(username == null || username.match(/(?:\w+)(?:\s+)(?:\w+)/)){
             socket.emit('invalid');
         }
-        else if (connectedSockets[username]) {
+        else if (clients.existingName(username)) {
             socket.emit('existing');
         }
         else{
-            socket.username = username;
-            connectedCount += 1;
-            connectedSockets[username] = socket;
-            socket.emit('chat', 'SERVER', 'You have connected');
-            socket.broadcast.emit('chat', 'SERVER', username + ' is on deck (currently online:' + connectedCount +')');
+            socket.userID = userID;
 
-            io.sockets.emit('count', connectedCount);
+            clients.addUser(username, socket);
+
+            socket.emit('chat', 'SERVER', 'You have connected');
+            socket.broadcast.emit('chat', 'SERVER', username + ' is on deck (currently online:' + currentlyConnected +')');
+            io.sockets.emit('count', currentlyConnected);
+
+            var onlineUser = clients.getNamesArray();
+
+            io.sockets.emit('onlineUser', onlineUser);
+
         }
     });
 
@@ -57,8 +144,11 @@ io.sockets.on('connection', function (socket) {
         //if wisper tag, name und nachricht nicht leer
         if(match && match[1]=="/w" && match[2] != null && match[3] != null){
             //falls name vorhanden schicken
-            if(connectedSockets[match[2]]){
-                connectedSockets[match[2]].emit('whisperMessageReceive', socket.username, match[3]);
+            if(clients.existingName(match[2])){
+
+
+                var client = clients.getUserByName(match[2]);
+                client.socket.emit('whisperMessageReceive', client.userName, match[3]);
                 socket.emit('whisperMessageSend', match[2], match [3])
             }
             //sonst note schreiben
@@ -69,7 +159,7 @@ io.sockets.on('connection', function (socket) {
         }
         //normale nachricht
         else{
-            io.sockets.emit('chat', socket.username, data);
+            io.sockets.emit('chat', clients.getUsername(socket.userID), data);
         }
     });
 
@@ -78,9 +168,17 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('disconnect', function() {
-        connectedCount -= 1;
-        connectedSockets[socket.username]=null
-        io.sockets.emit('chat', 'SERVER', socket.username + ' has left the building');
-        io.sockets.emit('count', connectedCount);
+        //fall dass man ohne anmelden gleich schliesst
+        if(socket.userID != null){
+            socket.broadcast.emit('chat', 'SERVER', clients.getUsername(socket.userID) + ' has left the building');
+            clients.disconnectUser(socket.userID);
+            io.sockets.emit('count', currentlyConnected);
+
+            var onlineUser = clients.getNamesArray();
+
+            io.sockets.emit('onlineUser', onlineUser);
+        }
+
+
     });
 });

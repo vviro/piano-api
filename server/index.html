@@ -60,7 +60,7 @@
             left: 0px;
             top: 0px;
             border-left: 1px solid;
-            width: 504px;
+            width: 896px;
         }
         .ivory span {
             background-color: #fffff0;
@@ -78,7 +78,7 @@
             left: 0px;
             top: 0px;
             margin-left: 18px;
-            width: 504px;
+            width: 896px;
         }
         .ebony span {
             position: relative;
@@ -215,24 +215,51 @@
     </object>
 </object>
 
-<div id=piano>
-    <div class=ebony>
-        <span id=49></span><span id=51></span><span class=break></span><span id=54></span><span id=56></span><span id=58></span><span class=break></span><span id=61></span><span id=63></span><span class=break></span><span id=66></span><span id=68></span><span id=70></span><span class=break></span><span id=73></span><span id=75></span>
-    </div>
-    <div class=ivory>
-        <span id=48></span><span id=50></span><span id=52></span><span id=53></span><span id=55></span><span id=57></span><span id=59></span><span id=60></span><span id=62></span><span id=64></span><span id=65></span><span id=67></span><span id=69></span><span id=71></span><span id=72></span><span id=74></span><span id=76></span>
-    </div>
-</div>
 
+
+    <div id=piano>
+        <div class=ebony>
+            <span id=37></span><span id=39></span><span class=break></span><span id=42></span><span id=44></span><span id=46></span><span class=break></span><span id=49></span><span id=51></span><span class=break></span><span id=54></span><span id=56></span><span id=58></span><span class=break></span><span id=61></span><span id=63></span><span class=break></span><span id=66></span><span id=68></span><span id=70></span><span class=break></span><span id=73></span><span id=75></span><span class=break></span><span id=78></span><span id=80></span><span id=82></span><span class=break></span><span id=85></span><span id=87></span>
+        </div>
+        <div class=ivory>
+            <span id=36></span><span id=38></span><span id=40></span><span id=41></span><span id=43></span><span id=45></span><span id=47></span><span id=48></span><span id=50></span><span id=52></span><span id=53></span><span id=55></span><span id=57></span><span id=59></span><span id=60></span><span id=62></span><span id=64></span><span id=65></span><span id=67></span><span id=69></span><span id=71></span><span id=72></span><span id=74></span><span id=76></span><span id=77></span><span id=79></span><span id=81></span><span id=83></span><span id=84></span><span id=86></span><span id=88></span>
+        </div>
+    </div>
+<div align="center">
 <p>
     MIDI In: <select id=midiIn onchange='changeIn();'><option value="">Not connected</option><option value="piano">Website Piano</option></select>
 
     MIDI Out: <select id=midiOut onchange='changeOut();'><option value="">Not connected</option></select>
 
-    User Currently Playing:<select id=userPlaying onchange='changeUser();'><option value="">No user</option></select>
-<div id=msg></div>
+    <p style="visibility:hidden">User Currently Playing:<select id=userPlaying onchange='changeUser();'><option value="">No user</option></select></p>
+
+
 </p>
 
+<div id="count">Offline</div>
+
+<p>
+    Currently Online:
+
+<div id=currentUser></div>
+</p>
+
+    <p style="margin-top : 0; text-indent : 20px; text-align : justify; ">
+        Mit MIDI In stellt man den Midi Eingang ein. Midi Events die über diesen Eingang eingehen werden an den Server gesendet und an alle anderen anwesenden Clients geschickt. </br>
+        Mit MIDI Out kann man Midi Ausgänge ansteuern, über den eingehende Midi Events abgespielt werden. Die Einstellung "Not connected" gibt nicht aus. </br>
+        </br>
+        Man kann auch das oben dargestellte Piano verwenden indem man bei MIDI in das "Web Piano" auswählt.</br>
+    </p>
+
+
+<div id="output" style = "display:none"></div>
+<div id="send" style="display:none">
+    <input type="text" id="data" size="100" /><br />
+    <input type="button" id="sendtext" value="Send Text" />
+</div>
+<div id=msg style="display:none"></div>
+
+</div>
 <script><!--
 var Jazz;
 var active_element;
@@ -513,19 +540,6 @@ else{window.onfocus=connectMidiIn; window.onblur=disconnectMidiIn;}
 
 
 
-<div id="count">Offline</div>
 
-<p>
-    Currently Online:
-
-<div id=currentUser></div>
-</p>
-
-
-<div id="output"></div>
-<div id="send">
-    <input type="text" id="data" size="100" /><br />
-    <input type="button" id="sendtext" value="Send Text" />
-</div>
 </body>
 </html>

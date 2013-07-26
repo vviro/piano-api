@@ -241,7 +241,8 @@ function midiString(a,b,c){
 function changeIn(){
     try{
         if(selIn.selectedIndex){
-            current_listen=Jazz.MidiInOpen(selIn.options[selIn.selectedIndex].value,midiProc);
+            current_in=Jazz.MidiInOpen(selIn.options[selIn.selectedIndex].value,midiProc);
+            console.log(current_in)
         } else {
             Jazz.MidiInClose(); current_in='';
         }
@@ -249,7 +250,7 @@ function changeIn(){
             if(selIn[i].value==current_in) selIn[i].selected=1;
         }
     }
-    catch(err){}
+    catch(err){console.log(err)}
 }
 
 function changeOut(){
@@ -264,7 +265,7 @@ function changeOut(){
             if(selOut[i].value==current_out) selOut[i].selected=1;
         }
     }
-    catch(err){}
+    catch(err){console.log(err)}
 }
 
 //der user dem zugehoert wird ausgesucht
@@ -278,7 +279,7 @@ function changeUser(){
             if(userPlaying[i].value==current_listen) userPlaying[i].selected=1;
         }
     }
-    catch(err){}
+    catch(err){console.log(err)}
 }
 
 

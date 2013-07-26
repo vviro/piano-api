@@ -129,6 +129,10 @@
                     }, false);
         }, false);
 
+     function sendStatus(boolean){
+         socket.emit('status', boolean);
+     }
+
      //schickt MidiEvent an Server
      function sendMidiEvent(a,b,c){
          socket.emit('sendMidiEvent', a,b,c);
@@ -170,7 +174,10 @@ var selIn;
 var selOut;
 var userPlaying;
 
+//variable fuer aktuell spielen
 var playing = false;
+//variable zum vergleich ob sich was geaendert hat
+var playingTemp = false;
 var lastNoteOff;
 
 //// Callback function
@@ -183,6 +190,12 @@ function midiProc(t,a,b,c){
 
     //zum testen ob man gerade spielt
     playing = true;
+    //wenn sich was geandert hat schicks raus und speicher wieder in die vergleichsvariable
+    if(playing != playingTemp){
+        playingTemp = playing;
+        sendStatus(playing)
+    }
+
     //wenn note off speicher zeit
     var cmd=Math.floor(a/16);
     if(cmd == 8){
@@ -242,7 +255,6 @@ function changeIn(){
     try{
         if(selIn.selectedIndex){
             current_in=Jazz.MidiInOpen(selIn.options[selIn.selectedIndex].value,midiProc);
-            console.log(current_in)
         } else {
             Jazz.MidiInClose(); current_in='';
         }
@@ -285,9 +297,12 @@ function changeUser(){
 
 // wenn 30 sekunden vergangen sind seitdem der letzte noteoff kam wird angezeigt man spielt nichtmehr
 function checkIfPlaying(){
-     var currentTime = Math.round(new Date().getTime() / 1000);
-    if(currentTime-lastNoteOff > 30){
+    var currentTime = Math.round(new Date().getTime() / 1000);
+    if(currentTime-lastNoteOff > 5  && playing){
+
         playing = false;
+        playingTemp = playing;
+        sendStatus(playing);
     }
     //console.log(playing);
 }

@@ -174,6 +174,15 @@ io.sockets.on('connection', function (socket) {
         //console.log('type:  '+data.type + ' and name:' + data.name);
     });
 
+    socket.on('status', function(boolean) {
+
+        clients.user[socket.userID].playing = boolean;
+        var onlineUser = clients.getNamesArray();
+        var status = clients.getStatusArray();
+
+        io.sockets.emit('onlineUser', onlineUser, status);
+    });
+
 
     //midi
     socket.on('sendMidiEvent', function(a,b,c) {

@@ -187,7 +187,9 @@ io.sockets.on('connection', function (socket) {
     //midi
     socket.on('sendMidiEvent', function(a,b,c) {
         //console.log(a,b,c);
+        //die zeile sendet an alle andren
         //socket.broadcast.emit('receiveMidiEvent', a,b,c);
+        //die zeile an alle inklusive sich selbst
         io.sockets.emit('receiveMidiEvent', a,b,c);
     });
 

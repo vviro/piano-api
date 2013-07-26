@@ -69,14 +69,22 @@
         });
 
 
-        socket.on('onlineUser', function(array) {
+        socket.on('onlineUser', function(arrayUser, arrayStatus) {
+            var userPlaying = [];
+
             document.getElementById('currentUser').innerHTML = "";
             var p = document.createElement('p');
-            for (var i=0;i<array.length;i++)
+            for (var i=0;i<arrayUser.length;i++)
             {
-                p.innerHTML += array[i]+"<br>";
+                var playing = 'not playing';
+                if(arrayStatus[i]){
+                  playing = 'playing';
+                  userPlaying.push(arrayUser[i]);
+                }
+                p.innerHTML += 'User: '+arrayUser[i]+' Status: '+playing +  "<br>";
                 document.getElementById('currentUser').appendChild(p);
             }
+            updateAvailablePlaying(userPlaying);
         })
 
         socket.on('chat',function(username, data) {
@@ -122,13 +130,13 @@
         }, false);
 
      //schickt MidiEvent an Server
-     function sendMidiEvent(string){
-         socket.emit('sendMidiEvent', string);
+     function sendMidiEvent(a,b,c){
+         socket.emit('sendMidiEvent', a,b,c);
      }
 
         //umgang mit empfangenen MidiEvent
-        socket.on('receiveMidiEvent',function(string) {
-            postMidi(string);
+        socket.on('receiveMidiEvent',function(a,b,c) {
+            postMidi(a,b,c);
         });
 
     </script>
@@ -141,11 +149,13 @@
     </object>
 </object>
 
+
 <p>
-    MIDI Input:
-    <select id=midiIn onchange='changeMidi();'>
-        <option value="">Not connected</option>
-    </select>
+    MIDI In: <select id=midiIn onchange='changeIn();'><option value="">Not connected</option></select>
+
+    MIDI Out: <select id=midiOut onchange='changeOut();'><option value="">Not connected</option></select>
+
+    User Currently Playing:<select id=userPlaying onchange='changeUser();'><option value="">No user</option></select>
 <div id=msg></div>
 </p>
 
@@ -153,22 +163,46 @@
 var Jazz;
 var active_element;
 var current_in;
+var current_out;
+var current_listen;
 var msg;
-var sel;
+var selIn;
+var selOut;
+var userPlaying;
+
+var playing = false;
+var lastNoteOff;
 
 //// Callback function
 function midiProc(t,a,b,c){
     var string = midiString(a,b,c);
     msg.innerHTML=msg.innerHTML+string+"<br>";
     msg.scrollTop=msg.scrollHeight;
-    sendMidiEvent(string);
+    sendMidiEvent(a,b,c);
+
+
+    //zum testen ob man gerade spielt
+    playing = true;
+    //wenn note off speicher zeit
+    var cmd=Math.floor(a/16);
+    if(cmd == 8){
+        lastNoteOff =  Math.round(new Date().getTime() / 1000);
+    }
+
 }
 
 //test dass an die ausgabe von anderen clients geschrieben wird
-function postMidi(string){
+function postMidi(a,b,c){
+    var string = midiString(a,b,c);
     msg.innerHTML=msg.innerHTML+string+"<br>";
     msg.scrollTop=msg.scrollHeight;
+
+    if(Jazz.isJazz){
+         Jazz.MidiOut(a,b,c);
+    }
 }
+
+
 
 
 
@@ -204,33 +238,112 @@ function midiString(a,b,c){
 }
 
 //// Listbox
-function changeMidi(){
+function changeIn(){
     try{
-        if(sel.selectedIndex){
-            current_in=Jazz.MidiInOpen(sel.options[sel.selectedIndex].value,midiProc);
+        if(selIn.selectedIndex){
+            current_listen=Jazz.MidiInOpen(selIn.options[selIn.selectedIndex].value,midiProc);
         } else {
             Jazz.MidiInClose(); current_in='';
         }
-        for(var i=0;i<sel.length;i++){
-            if(sel[i].value==current_in) sel[i].selected=1;
+        for(var i=0;i<selIn.length;i++){
+            if(selIn[i].value==current_in) selIn[i].selected=1;
         }
     }
     catch(err){}
+}
+
+function changeOut(){
+    try{
+        if(selOut.selectedIndex){
+            current_out=Jazz.MidiOutOpen(selOut.options[selOut.selectedIndex].value);
+            if(current_out!=''){ Jazz.MidiOut(0xc0,current_snd,0);}
+        } else {
+            Jazz.MidiOutClose(); current_out='';
+        }
+        for(var i=0;i<selOut.length;i++){
+            if(selOut[i].value==current_out) selOut[i].selected=1;
+        }
+    }
+    catch(err){}
+}
+
+//der user dem zugehoert wird ausgesucht
+function changeUser(){
+    try{
+        if(userPlaying.selectedIndex){
+            current_listen = userPlaying[userPlaying.selectedIndex].value;
+        }
+
+        for(var i=0;i<userPlaying.length;i++){
+            if(userPlaying[i].value==current_listen) userPlaying[i].selected=1;
+        }
+    }
+    catch(err){}
+}
+
+
+// wenn 30 sekunden vergangen sind seitdem der letzte noteoff kam wird angezeigt man spielt nichtmehr
+function checkIfPlaying(){
+     var currentTime = Math.round(new Date().getTime() / 1000);
+    if(currentTime-lastNoteOff > 30){
+        playing = false;
+    }
+    //console.log(playing);
+}
+
+//funktion testet welche midi anschluesse da sind und fuegt neue hinzu
+function checkForMidi(){
+    try{
+        //current_in=Jazz.MidiInOpen(0,midiProc);
+        var list=Jazz.MidiInList();
+
+        for(var i = 0; i < selIn.options.length-1; i++){
+            selIn[i+1] = null
+        }
+
+        for(var i in list){
+            selIn[selIn.options.length]=new Option(list[i],list[i],list[i]==current_in,list[i]==current_in);
+        }
+
+        //current_out=Jazz.MidiOutOpen(0);
+        var list=Jazz.MidiOutList();
+
+        for(var i = selOut.options.length-1; i >= 1; i--){
+            selOut[i] = null
+        }
+
+
+        for(var i in list){
+            selOut[selOut.options.length]=new Option(list[i],list[i],list[i]==current_out,list[i]==current_out);
+        }
+
+    }
+    catch(err){}
+}
+
+function updateAvailablePlaying(userArray){
+    for(var i = 0; i < userPlaying.options.length-1; i++){
+        userPlaying[i+1] = null
+    }
+
+    for(var i in userArray){
+        userPlaying[userPlaying.options.length]=new Option(userArray[i],userArray[i],userArray[i]==current_listen,userArray[i]==current_listen);
+    }
 }
 
 //// Connect/disconnect
 function connectMidiIn(){
     try{
         var str=Jazz.MidiInOpen(current_in,midiProc);
-        for(var i=0;i<sel.length;i++){
-            if(sel[i].value==str) sel[i].selected=1;
+        for(var i=0;i<selIn.length;i++){
+            if(selIn[i].value==str) selIn[i].selected=1;
         }
     }
     catch(err){}
 }
 function disconnectMidiIn(){
     try{
-        Jazz.MidiInClose(); sel[0].selected=1;
+        Jazz.MidiInClose(); selIn[0].selected=1;
     }
     catch(err){}
 }
@@ -243,33 +356,13 @@ function onBlurIE(){
     disconnectMidiIn();
 }
 
-//funktion testet welche midi anschluesse da sind und fuegt neue hinzu
-function checkForMidi(){
-    try{
-        current_in=Jazz.MidiInOpen(0,midiProc);
-        var list=Jazz.MidiInList();
-
-        for(var i in list){
-            //hier noch testen obs schon drin ist das element
-            var contained = false;
-            for(var j in sel.options){
-                if(sel.options[j].value == list[i]){
-                    contained = true;
-                }
-            }
-            //nur wenns noch nicht da war wirds neu hinzugefuegt
-            if(!contained){
-                sel[sel.options.length]=new Option(list[i],list[i],list[i]==current_in,list[i]==current_in);
-            }
-        }
-    }
-    catch(err){}
-}
 
 //// Initialize
 Jazz=document.getElementById("Jazz1"); if(!Jazz || !Jazz.isJazz) Jazz = document.getElementById("Jazz2");
 msg=document.getElementById("msg");
-sel=document.getElementById("midiIn");
+selIn=document.getElementById("midiIn");
+selOut=document.getElementById("midiOut");
+userPlaying=document.getElementById("userPlaying");
 
 checkForMidi();
 
@@ -284,6 +377,10 @@ $(document)
         .on('blur', function() {
             clearInterval(intervalHandle);
         });
+
+//zweite loop schaut ob man gerade spielt
+var intervalHandlePlaying = window.setInterval(checkIfPlaying, 100);
+
 /**
 if(navigator.appName=='Microsoft Internet Explorer'){document.onfocusin=onFocusIE; document.onfocusout=onBlurIE;}
 else{window.onfocus=connectMidiIn; window.onblur=disconnectMidiIn;}

@@ -26,6 +26,7 @@ var currentlyConnected = 0;
 Client = function(userID, userName, socket){
     this.userID = userID;
     this.userName = userName;
+    this.playing = false;
     this.socket = socket;
 }
 
@@ -72,6 +73,17 @@ Clients.prototype.getNamesArray = function(){
     return names;
 }
 
+//gibt array mit status zurueck fuer anzeige
+Clients.prototype.getStatusArray = function(){
+    var status = [];
+    for(var i = 0; i < this.user.length; i++){
+        if(this.user[i]){
+            status.push(this.user[i].playing);
+        }
+    }
+    return status;
+}
+
 Clients.prototype.getUsername = function(userID){
     return this.user[userID].userName;
 }
@@ -98,16 +110,10 @@ Clients.prototype.disconnectUser = function(userID){
 var clients = new Clients();
 
 
-
-var connectedSockets = {} ;
-var connectedCount = 0;
-var online = [];
-
-
 io.sockets.on('connection', function (socket) {
     socket.on('addme',function(username) {
         // falls leer oder leerzeichen folgt invalid
-        if(username == null || username.match(/(?:\w+)(?:\s+)(?:\w+)/)){
+        if(username == null || username == '' || username.match(/(?:\w+)(?:\s+)(?:\w+)/)){
             socket.emit('invalid');
         }
         else if (clients.existingName(username)) {
@@ -123,8 +129,9 @@ io.sockets.on('connection', function (socket) {
             io.sockets.emit('count', currentlyConnected);
 
             var onlineUser = clients.getNamesArray();
+            var status = clients.getStatusArray();
 
-            io.sockets.emit('onlineUser', onlineUser);
+            io.sockets.emit('onlineUser', onlineUser, status);
 
         }
     });
@@ -169,9 +176,9 @@ io.sockets.on('connection', function (socket) {
 
 
     //midi
-    socket.on('sendMidiEvent', function(string) {
-        console.log(string);
-        socket.broadcast.emit('receiveMidiEvent', string);
+    socket.on('sendMidiEvent', function(a,b,c) {
+        //console.log(a,b,c);
+        socket.broadcast.emit('receiveMidiEvent', a,b,c);
     });
 
     socket.on('disconnect', function() {
@@ -182,8 +189,9 @@ io.sockets.on('connection', function (socket) {
             io.sockets.emit('count', currentlyConnected);
 
             var onlineUser = clients.getNamesArray();
+            var status = clients.getStatusArray();
 
-            io.sockets.emit('onlineUser', onlineUser);
+            io.sockets.emit('onlineUser', onlineUser, status);
         }
 
 

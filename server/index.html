@@ -47,6 +47,65 @@
         }
 
 
+        /**
+        piano anzeige
+        **/
+        div#piano {
+            position: relative;
+            color: #808080;
+            height: 102px;
+        }
+        div.ivory {
+            position: absolute;
+            left: 0px;
+            top: 0px;
+            border-left: 1px solid;
+            width: 504px;
+        }
+        .ivory span {
+            background-color: #fffff0;
+            padding: 0px;
+            margin: 0px;
+            border: 1px solid;
+            border-left: 0px;
+            display: inline-block;
+            width: 27px;
+            height: 100px;
+            vertical-align: top;
+        }
+        div.ebony {
+            position: absolute;
+            left: 0px;
+            top: 0px;
+            margin-left: 18px;
+            width: 504px;
+        }
+        .ebony span {
+            position: relative;
+            z-index: 1;
+            background-color: #111;
+            padding: 0px;
+            margin: 0px;
+            border: 1px solid;
+            display: inline-block;
+            width: 15px;
+            height: 70px;
+            margin-right: 15px;
+            vertical-align: top;
+        }
+        .ebony span.break {
+            border: 0px;
+            display: inline-block;
+            width: 1px;
+            margin-right: 17px;
+            visibility:hidden;
+        }
+        .ivory span.on {
+            background-color: #aaa;
+        }
+        .ebony span.on {
+            background-color: #aaa;
+        }
 
     </style>
 
@@ -156,9 +215,17 @@
     </object>
 </object>
 
+<div id=piano>
+    <div class=ebony>
+        <span id=49></span><span id=51></span><span class=break></span><span id=54></span><span id=56></span><span id=58></span><span class=break></span><span id=61></span><span id=63></span><span class=break></span><span id=66></span><span id=68></span><span id=70></span><span class=break></span><span id=73></span><span id=75></span>
+    </div>
+    <div class=ivory>
+        <span id=48></span><span id=50></span><span id=52></span><span id=53></span><span id=55></span><span id=57></span><span id=59></span><span id=60></span><span id=62></span><span id=64></span><span id=65></span><span id=67></span><span id=69></span><span id=71></span><span id=72></span><span id=74></span><span id=76></span>
+    </div>
+</div>
 
 <p>
-    MIDI In: <select id=midiIn onchange='changeIn();'><option value="">Not connected</option></select>
+    MIDI In: <select id=midiIn onchange='changeIn();'><option value="">Not connected</option><option value="piano">Website Piano</option></select>
 
     MIDI Out: <select id=midiOut onchange='changeOut();'><option value="">Not connected</option></select>
 
@@ -182,6 +249,35 @@ var playing = false;
 //variable zum vergleich ob sich was geaendert hat
 var playingTemp = false;
 var lastNoteOff;
+
+//boolean ob man per web piano spielt oder nicht
+var webPiano = false;
+var key;
+//methoden zum bedienen des klaviers
+document.onmousedown=function(e){
+    if(webPiano){
+        var e=window.event || e;
+        var k;
+        if (e.target) k = e.target;
+        else if (e.srcElement) k = e.srcElement;
+        var m=parseInt(k.id);
+        if(k.id==m)
+        { document.onmouseup(e);
+            if(Jazz.isJazz) midiProc(0,0x90,m,0x7f);
+            k.className="on"; key=k;
+        }
+    }
+
+    return true;
+}
+document.onmouseup=function(e){
+    if(key)
+    { var m=parseInt(key.id);
+        { if(Jazz.isJazz) midiProc(0,0x80,m,0);
+            key.className=""; key="";
+        }
+    }
+}
 
 //// Callback function
 function midiProc(t,a,b,c){
@@ -257,13 +353,20 @@ function midiString(a,b,c){
 //// Listbox
 function changeIn(){
     try{
-        if(selIn.selectedIndex){
+        if(selIn.selectedIndex && selIn.selectedIndex != 1){
             current_in=Jazz.MidiInOpen(selIn.options[selIn.selectedIndex].value,midiProc);
-        } else {
+        } else if(selIn.selectedIndex == 1){
+            Jazz.MidiInClose(); current_in='piano';
+        }  else {
             Jazz.MidiInClose(); current_in='';
         }
         for(var i=0;i<selIn.length;i++){
             if(selIn[i].value==current_in) selIn[i].selected=1;
+        }
+        if(selIn.selectedIndex == 1){
+          webPiano = true;
+        } else{
+          webPiano = false;
         }
     }
     catch(err){console.log(err)}
@@ -317,8 +420,8 @@ function checkForMidi(){
         //current_in=Jazz.MidiInOpen(0,midiProc);
         var list=Jazz.MidiInList();
 
-        for(var i = 0; i < selIn.options.length-1; i++){
-            selIn[i+1] = null
+        for(var i = 0; i < selIn.options.length-2; i++){
+            selIn[i+2] = null
         }
 
         for(var i in list){

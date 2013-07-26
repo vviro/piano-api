@@ -210,7 +210,7 @@ function postMidi(a,b,c){
     msg.innerHTML=msg.innerHTML+string+"<br>";
     msg.scrollTop=msg.scrollHeight;
 
-    if(Jazz.isJazz){
+    if(Jazz.isJazz && selOut.options[selOut.selectedIndex].value != ''){
          Jazz.MidiOut(a,b,c);
     }
 }

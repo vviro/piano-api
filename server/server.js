@@ -187,7 +187,8 @@ io.sockets.on('connection', function (socket) {
     //midi
     socket.on('sendMidiEvent', function(a,b,c) {
         //console.log(a,b,c);
-        socket.broadcast.emit('receiveMidiEvent', a,b,c);
+        //socket.broadcast.emit('receiveMidiEvent', a,b,c);
+        io.sockets.emit('receiveMidiEvent', a,b,c);
     });
 
     socket.on('disconnect', function() {

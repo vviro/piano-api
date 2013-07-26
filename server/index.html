@@ -45,6 +45,9 @@
             font-size:.75em;
             overflow:auto;
         }
+
+
+
     </style>
 
 
@@ -204,12 +207,13 @@ function midiProc(t,a,b,c){
 
 }
 
-//test dass an die ausgabe von anderen clients geschrieben wird
+//test dass an die ausgabe von anderen clients geschrieben/gespielt wird
 function postMidi(a,b,c){
+    /**
     var string = midiString(a,b,c);
     msg.innerHTML=msg.innerHTML+string+"<br>";
     msg.scrollTop=msg.scrollHeight;
-
+    **/
     if(Jazz.isJazz && selOut.options[selOut.selectedIndex].value != ''){
          Jazz.MidiOut(a,b,c);
     }
